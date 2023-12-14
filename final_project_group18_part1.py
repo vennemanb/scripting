@@ -17,7 +17,7 @@ sender_password = "your_app_password"
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
 
-def find_compromised_files(ip_address, username, password):
+def find_compromised_files(ip_address, username, password, path):
     # Command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
@@ -104,7 +104,7 @@ def main():
     display_files_flag = args.disp
     download_path = args.path
 
-    compromised_files = find_compromised_files(ip_address, username, password)
+    compromised_files = find_compromised_files(ip_address, username, password, download_path)
 
     # Display files if -d flag is present
     if display_files_flag:
@@ -114,11 +114,9 @@ def main():
 
     send_email(sender_email, sender_password, recipient_email, compromised_files, username)
 
-     if download_path:
-        # Download files to the specified path
+    if download_path:
         download_files_ssh(compromised_files, download_path, ip_address, username, password)
     else:
-        # If no download path is given, download the smallest compromised file to the current directory
         smallest_file = min(compromised_files, key=os.path.getsize)
         download_files_ssh([smallest_file], '.', ip_address, username, password)
 
