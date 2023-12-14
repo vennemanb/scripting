@@ -87,7 +87,7 @@ def main():
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
     parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
     parser.add_argument('-p', '--path', help='Download path for affected files')
-    parser.add_argument('-H', '--help', action='help', help='Show this help message and exit')
+    parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
 
     args = parser.parse_args()
 
