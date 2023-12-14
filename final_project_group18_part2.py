@@ -89,7 +89,7 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
 
 def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
     msg = MIMEMultipart()
-    msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
+    msg.attach(MIMEText(f"Hello, your username is: {username} and your temporary password is: {temp_password}"))
     msg['Subject'] = 'Your Temporary Credentials'
     msg['From'] = sender_email
     msg['To'] = user_email
