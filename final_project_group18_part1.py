@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from datetime import datetime, timedelta
 import subprocess
-import getpass
+from getpass import getpass
 
 #insert your email and password to the sender 
 sender_email = "autoemail1.3@gmail.com"
@@ -61,17 +61,21 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
             server.login(sender_email, sender_app_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
 
-def download_files_sftp(compromised_files, download_path, ip_address, username, password):
-    with paramiko.Transport((ip_address, 22)) as transport:
-        transport.connect(username=username, password=password)
-        sftp = paramiko.SFTPClient.from_transport(transport)
+def download_files_ssh(compromised_files, download_path, ip_address, username, password):
+    for file_path in compromised_files:
+        file_name = os.path.basename(file_path)
+        local_file_path = os.path.join(download_path, file_name)
 
-        for file_path in compromised_files:
-            file_name = os.path.basename(file_path)
-            local_file_path = os.path.join(download_path, file_name)
-            sftp.get(file_path, local_file_path)
-            
+        # Use SCP to copy files from the remote server to the local machine
+        scp_command = f'scp {username}@{ip_address}:{file_path} {local_file_path}'
+
+        # Execute the SCP command locally
+        result = os.system(scp_command)
+
+        if result == 0:
             print(f"Downloaded {file_name} to {local_file_path}")
+        else:
+            print(f"Error downloading {file_name}")
 
 def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
@@ -102,7 +106,7 @@ def main():
     send_email(sender_email, sender_password, recipient_email, compromised_files, username)
 
     if download_path:
-        download_files_sftp(compromised_files, download_path, ip_address, username, password)
+        download_files_ssh(compromised_files, download_path, ip_address, username, password)
 
 if __name__ == "__main__":
     main()
