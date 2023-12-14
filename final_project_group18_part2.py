@@ -7,8 +7,9 @@ import argparse
 import csv
 import subprocess
 import time
-from email.message import EmailMessage  # Import EmailMessage
+from email.message import EmailMessage
 import smtplib
+import os  # Import the os module
 
 # Function to get unique user groups from the employee file
 def get_unique_groups(file_path):
@@ -81,19 +82,17 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
         writer.writerow(['First Name', 'Last Name', 'Username', 'Password'])
         writer.writerows(user_details)
 
-def email_temp_password(username, temp_password, user_email):
+def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
     msg = EmailMessage()
     msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
     msg['Subject'] = 'Your Temporary Credentials'
-    msg['From'] = 'autoemail1.3@gmail.com'  # Replace with the sender's email address
+    msg['From'] = sender_email
     msg['To'] = user_email
-    
-    sender_email = 'autoemail1.3@gmail.com'
-    sender_password = 'nzjg fqql xcoa uzmj'
+
     # Send the message via the SMTP server
-    with smtplib.SMTP('smtp.gmail.com', 587) as s:  # Replace with the SMTP server and port
+    with smtplib.SMTP('smtp.gmail.com', 587) as s:
         s.starttls()
-        s.login(sender_email, sender_password)  # Replace with the sender's email and password
+        s.login(sender_email, sender_password)
         s.send_message(msg)
 
 # Argument parsing
@@ -110,14 +109,16 @@ args = parser.parse_args()
 def main():
     create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
     if args.q:
+        sender_email = 'autoemail1.3@gmail.com'
+        sender_password = 'nzjg fqql xcoa uzmj'
         with open(args.OUTPUT_FILE_PATH, 'r') as file:
             reader = csv.reader(file)
             next(reader)  # Skip the header
             for row in reader:
                 username = row[2]
                 temp_password = row[3]
-                user_email = row[3] 
-                email_temp_password(username, temp_password, user_email)
+                user_email = row[3]
+                email_temp_password(username, temp_password, user_email, sender_email, sender_password)
 
     if args.temporary:
         force_password_expiration(args.E_FILE_PATH)
