@@ -8,6 +8,7 @@ import csv
 import subprocess
 import time
 from email.message import EmailMessage  # Import EmailMessage
+import smtplib
 
 # Function to get unique user groups from the employee file
 def get_unique_groups(file_path):
@@ -84,13 +85,15 @@ def email_temp_password(username, temp_password, user_email):
     msg = EmailMessage()
     msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
     msg['Subject'] = 'Your Temporary Credentials'
-    msg['From'] = 'your_email@example.com'  # Replace with the sender's email address
+    msg['From'] = 'autoemail1.3@gmail.com'  # Replace with the sender's email address
     msg['To'] = user_email
-
+    
+    sender_email = 'autoemail1.3@gmail.com'
+    sender_password = 'nzjg fqql xcoa uzmj'
     # Send the message via the SMTP server
-    with smtplib.SMTP('smtp.example.com', 587) as s:  # Replace with the SMTP server and port
+    with smtplib.SMTP('smtp.gmail.com', 587) as s:  # Replace with the SMTP server and port
         s.starttls()
-        s.login('autoemail1.3@gmail.com', 'qawk ydky fekd ysuk')  # Replace with the sender's email and password
+        s.login(sender_email, sender_password)  # Replace with the sender's email and password
         s.send_message(msg)
 
 # Argument parsing
@@ -106,14 +109,14 @@ args = parser.parse_args()
 # Main function
 def main():
     create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
-    if args.email:
+    if args.q:
         with open(args.OUTPUT_FILE_PATH, 'r') as file:
             reader = csv.reader(file)
             next(reader)  # Skip the header
             for row in reader:
                 username = row[2]
                 temp_password = row[3]
-                user_email = row[4]  # Assuming the email is in the fifth column
+                user_email = row[3] 
                 email_temp_password(username, temp_password, user_email)
 
     if args.temporary:
