@@ -25,16 +25,20 @@ def find_compromised_files(username):
     # Build the find command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
-    # Execute the find command locally
-    result = subprocess.run(find_command, shell=True, capture_output=True, text=True)
+    # Execute the find command remotely using SSH
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(ip_address, username=username, password=password)
+    
+    stdin, stdout, stderr = ssh.exec_command(find_command)
     
     # Check if the command was successful
-    if result.returncode == 0:
+    if not stderr.read().decode():
         # Read the output of the find command
-        compromised_files = result.stdout.splitlines()
+        compromised_files = stdout.read().decode().splitlines()
         return compromised_files
     else:
-        print(f"Error executing find command: {result.stderr}")
+        print(f"Error executing find command: {stderr.read().decode()}")
         return []
 
 def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
@@ -57,16 +61,15 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
             server.login(sender_email, sender_app_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
 
-def download_files_ftp(compromised_files, download_path, ip_address, username, password):
-    with FTP(ip_address) as ftp:
-        ftp.login(username, password)
-        
+def download_files_sftp(compromised_files, download_path, ip_address, username, password):
+    with paramiko.Transport((ip_address, 22)) as transport:
+        transport.connect(username=username, password=password)
+        sftp = paramiko.SFTPClient.from_transport(transport)
+
         for file_path in compromised_files:
             file_name = os.path.basename(file_path)
             local_file_path = os.path.join(download_path, file_name)
-            
-            with open(local_file_path, 'wb') as local_file:
-                ftp.retrbinary(f'RETR {file_path}', local_file.write)
+            sftp.get(file_path, local_file_path)
             
             print(f"Downloaded {file_name} to {local_file_path}")
 
@@ -74,6 +77,7 @@ def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
     parser.add_argument('ip_address', help='IP address of the target computer')
     parser.add_argument('username', help='Username for the account on the target computer')
+    parser.add_argument('password', help='Password for the account on the target computer')
     parser.add_argument('recipient_email', help='Email address of the CTO')
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
     parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
@@ -84,6 +88,7 @@ def main():
 
     ip_address = args.ip_address
     username = args.username
+    password = args.password
     recipient_email = args.recipient_email
     display_files_flag = args.disp
     download_path = args.path
@@ -98,7 +103,7 @@ def main():
     send_email(sender_email, sender_password, recipient_email, compromised_files, username)
 
     if download_path:
-        download_files_ftp(compromised_files, download_path, ip_address, username, "your_ftp_password")
+        download_files_sftp(compromised_files, download_path, ip_address, username, password)
 
 if __name__ == "__main__":
     main()
