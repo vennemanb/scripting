@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import subprocess
 from getpass import getpass
 
-#insert your email and password to the sender 
+# Insert your email and password to the sender
 sender_email = "autoemail1.3@gmail.com"
 sender_password = "pljo isun jxnw necn"
 
@@ -50,16 +50,17 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
     body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
     msg.attach(MIMEText(body, 'plain'))
 
-    for file_path in compromised_files:
-        with open(file_path, 'rb') as file:
-            part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
-            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-            msg.attach(part)
+    # Attach the smallest-sized file
+    smallest_file = min(compromised_files, key=os.path.getsize)
+    with open(smallest_file, 'rb') as file:
+        part = MIMEApplication(file.read(), Name=os.path.basename(smallest_file))
+        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(smallest_file)}"'
+        msg.attach(part)
 
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(sender_email, sender_app_password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(sender_email, sender_app_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
 
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
     for file_path in compromised_files:
