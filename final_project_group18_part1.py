@@ -73,7 +73,11 @@ def download_files_ssh(compromised_files, download_path, ip_address, username, p
             result = subprocess.run(scp_command, shell=True, check=True, capture_output=True)
             print(result.stdout.decode())
         except subprocess.CalledProcessError as e:
-            print(f"Error downloading {file_name}: {e}")
+            if "Permission denied" in e.stderr.decode():
+                print(f"Permission denied for {file_name}. Skipping...")
+                continue
+            else:
+                print(f"Error downloading {file_name}: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
