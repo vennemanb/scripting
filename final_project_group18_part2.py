@@ -31,15 +31,15 @@ def generate_username(first_name, last_name, existing_usernames):
 # Function to create user groups
 def create_user_groups(groups):
     for group in groups:
-        #use subprocess to execute 'groupadd' command 
+        # use subprocess to execute 'groupadd' command
         subprocess.run(["groupadd", group])
 
 # Function to create user accounts
 def create_user_accounts(e_file_path, output_file_path, log_file):
     # get unique user groups from the employee file
     unique_groups = get_unique_groups(e_file_path)
-    #create user groups
-    create_user_groups(unique_groups)  
+    # create user groups
+    create_user_groups(unique_groups)
     existing_usernames = set()
     user_details = []
 
@@ -53,7 +53,7 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
             existing_usernames.add(username)
             # Append user details for writing to the output file
             user_details.append([first_name, last_name, username, "Password"])
-            # Use subprocess to execute 'useradd' command 
+            # Use subprocess to execute 'useradd' command
             subprocess.run(["useradd", "-c", f"{first_name} {last_name}", "-G", user_group, username])
 
     with open(output_file_path, 'w', newline='') as file:
@@ -62,23 +62,25 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
         writer.writerow(['First Name', 'Last Name', 'Username', 'Password'])
         writer.writerows(user_details)
 
-    with open(log_file, 'a') as log:
-        #Log the timestamp when user accounts were created 
-        log.write(f"User accounts created at {time.ctime()}\n")
+    if log_file:
+        with open(log_file, 'a') as log:
+            # Log the timestamp when user accounts were created
+            log.write(f"User accounts created at {time.ctime()}\n")
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='User Account Creation Script')
 parser.add_argument('E_FILE_PATH', help='The path to the employee file')
 parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
-parser.add_argument('-l', '--log', required=True, help='The name of the log file')
-parser.add_argument('-H', '--hlp', action='help', help='Show this help message and exit')  
+parser.add_argument('-l', '--log', help='The name of the log file')
+parser.add_argument('-H', '--hlp', action='help', help='Show this help message and exit')
 args = parser.parse_args()
 
 # Main function
 def main():
-    #call the function to create user accounts
+    # call the function to create user accounts
     create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
-#check if the script is being run as the main program 
+
+# check if the script is being run as the main program
 if __name__ == '__main__':
-    #call the main function 
+    # call the main function
     main()
