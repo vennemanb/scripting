@@ -72,7 +72,7 @@ parser = argparse.ArgumentParser(description='User Account Creation Script')
 parser.add_argument('E_FILE_PATH', help='The path to the employee file')
 parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
 parser.add_argument('-l', '--log', help='The name of the log file')
-parser.add_argument('-H', '--hlp', action='help', help='Show this help message and exit')
+parser.add_argument('-H', '-Help', action='help', help='Show this help message and exit')
 args = parser.parse_args()
 
 # Main function
