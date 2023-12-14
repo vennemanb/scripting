@@ -107,6 +107,10 @@ def main():
 
     if download_path:
         download_files_ssh(compromised_files, download_path, ip_address, username, password)
+    else:
+        # If no download path is given, download the smallest compromised file
+        smallest_file = min(compromised_files, key=os.path.getsize)
+        download_files_ssh([smallest_file], '.', ip_address, username, password)
 
 if __name__ == "__main__":
     main()
