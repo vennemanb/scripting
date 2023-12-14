@@ -95,6 +95,24 @@ def email_temp_password(username, temp_password, user_email, sender_email, sende
         s.login(sender_email, sender_password)
         s.send_message(msg)
 
+def piped_commands(command1: str, command2: str):
+    # Combine the two commands with a pipe
+    piped_command = f"{command1} | {command2}"
+
+    # Get NKU username
+    nku_username = "your_nku_username"  # Replace with your NKU username or retrieve dynamically
+
+    # Create a subdirectory with NKU username
+    subdirectory = os.path.join(os.getcwd(), nku_username)
+    os.makedirs(subdirectory, exist_ok=True)
+
+    # Name of the result file
+    result_file = os.path.join(subdirectory, f"{nku_username}_question2_result.txt")
+
+    # Execute the piped command and save the result to the file
+    with open(result_file, 'w') as file:
+        subprocess.run(piped_command, shell=True, stdout=file)
+
 # Argument parsing
 parser = argparse.ArgumentParser(description='User Account Creation Script')
 parser.add_argument('E_FILE_PATH', help='The path to the employee file')
@@ -102,6 +120,7 @@ parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
 parser.add_argument('-l', '--log', help='The name of the log file', type=str)  # Specify type=str
 parser.add_argument('-q', action='store_true', help='Email the username and temporary password to the specified user')
 parser.add_argument('-t', '--temporary', action='store_true', help='Force password expiration for odd-numbered rows')
+parser.add_argument('-c', '--command', action='store_true', help='Perform tasks specified in question 2')
 parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
 args = parser.parse_args()
 
@@ -123,6 +142,13 @@ def main():
     if args.temporary:
         force_password_expiration(args.E_FILE_PATH)
 
+    if args.command:
+            # Get two commands from the user
+            command1 = input("Enter the first Linux command: ")
+            command2 = input("Enter the second Linux command: ")
+    
+            # Call the function to execute the piped commands
+            piped_commands(command1, command2)
 # check if the script is being run as the main program
 if __name__ == '__main__':
     # call the main function
