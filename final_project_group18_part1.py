@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import paramiko
 import os
 import argparse
@@ -67,23 +65,23 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
 
 # Download the compromised files via SSH
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
+    # Establish the SSH connection
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(ip_address, username=username, password=password)
+
+    # Download the compromised files
     for file_path in compromised_files:
         file_name = os.path.basename(file_path)
         local_file_path = os.path.join(download_path, file_name)
 
-        # Use SCP to copy files from the remote server to the local machine
-        scp_command = f'scp {username}@{ip_address}:{file_path} {local_file_path}'
+        # Use SFTP to download files from the remote server to the local machine
+        sftp = ssh.open_sftp()
+        sftp.get(file_path, local_file_path)
+        sftp.close()
 
-        try:
-            # Execute the SCP command locally
-            result = subprocess.run(scp_command, shell=True, check=True, capture_output=True)
-            print(result.stdout.decode())
-        except subprocess.CalledProcessError as e:
-            if "Permission denied" in e.stderr.decode():
-                print(f"Permission denied for {file_name}. Skipping...")
-                continue
-            else:
-                print(f"Error downloading {file_name}: {e}")
+    # Close the SSH connection
+    ssh.close()
 
 def main():
     # Add all command line arguments to use
@@ -117,6 +115,7 @@ def main():
     if download_path:
         download_files_ssh(compromised_files, download_path, ip_address, username, password)
     else:
+        # If no download path is given, download the smallest compromised file
         smallest_file = min(compromised_files, key=os.path.getsize)
         download_files_ssh([smallest_file], '.', ip_address, username, password)
 
