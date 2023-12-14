@@ -86,14 +86,14 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
         writer.writerow(['First Name', 'Last Name', 'Username', 'Password'])
         writer.writerows(user_details)
 
+
 def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
-    msg = EmailMessage()
+    msg = MIMEMultipart()
     msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
     msg['Subject'] = 'Your Temporary Credentials'
     msg['From'] = sender_email
     msg['To'] = user_email
 
-    # Send the message via the SMTP server
     with smtplib.SMTP('smtp.gmail.com', 587) as s:
         s.starttls()
         s.login(sender_email, sender_password)
