@@ -7,6 +7,7 @@ import argparse
 import csv
 import subprocess
 import time
+from email.message import EmailMessage  # Import EmailMessage
 
 # Function to get unique user groups from the employee file
 def get_unique_groups(file_path):
@@ -92,15 +93,14 @@ def email_temp_password(username, temp_password, user_email):
         s.login('autoemail1.3@gmail.com', 'qawk ydky fekd ysuk')  # Replace with the sender's email and password
         s.send_message(msg)
 
-
 # Argument parsing
 parser = argparse.ArgumentParser(description='User Account Creation Script')
 parser.add_argument('E_FILE_PATH', help='The path to the employee file')
 parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
-parser.add_argument('-l', '--log', help='The name of the log file')
+parser.add_argument('-l', '--log', help='The name of the log file', type=str)  # Specify type=str
 parser.add_argument('-q', action='store_true', help='Email the username and temporary password to the specified user')
 parser.add_argument('-t', '--temporary', action='store_true', help='Force password expiration for odd-numbered rows')
-parser.add_argument('-H', '-Help', action='help', help='Show this help message and exit')
+parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
 args = parser.parse_args()
 
 # Main function
