@@ -10,7 +10,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from datetime import datetime, timedelta
 import subprocess
 from getpass import getpass
 
@@ -69,13 +68,12 @@ def download_files_ssh(compromised_files, download_path, ip_address, username, p
         # Use SCP to copy files from the remote server to the local machine
         scp_command = f'scp {username}@{ip_address}:{file_path} {local_file_path}'
 
-        # Execute the SCP command locally
-        result = os.system(scp_command)
-
-        if result == 0:
-            print(f"Downloaded {file_name} to {local_file_path}")
-        else:
-            print(f"Error downloading {file_name}")
+        try:
+            # Execute the SCP command locally
+            result = subprocess.run(scp_command, shell=True, check=True, capture_output=True)
+            print(result.stdout.decode())
+        except subprocess.CalledProcessError as e:
+            print(f"Error downloading {file_name}: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
