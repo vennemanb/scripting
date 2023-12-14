@@ -21,7 +21,7 @@ sender_password = "pljo isun jxnw necn"
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
 
-def find_compromised_files(username, password):
+def find_compromised_files(ip_address, username, password):
     # Build the find command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
@@ -96,7 +96,7 @@ def main():
     display_files_flag = args.disp
     download_path = args.path
 
-    compromised_files = find_compromised_files(username, password)
+    compromised_files = find_compromised_files(ip_address, username, password)
 
     if display_files_flag:
         print("Affected Files:")
@@ -114,4 +114,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
