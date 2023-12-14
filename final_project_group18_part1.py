@@ -16,12 +16,14 @@ from getpass import getpass
 # Insert your email and password to the sender
 sender_email = ""
 sender_password = ""
+#!/usr/bin/python3
+
 
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
 
 def find_compromised_files(ip_address, username, password):
-    # command to identify compromised files
+    # Command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
     # Execute the find command remotely using SSH
@@ -39,29 +41,36 @@ def find_compromised_files(ip_address, username, password):
     else:
         print(f"Error executing find command: {stderr.read().decode()}")
         return []
-# send email to CTO with compromised user and the files
+
+# Send email to CTO with compromised user and the files
 def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
-    # Create message
-    msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = recipient_email
-    msg['Subject'] = 'File Monitoring Report'
+    # Check if recipient_email is provided
+    if recipient_email:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+        msg['Subject'] = 'File Monitoring Report'
 
-    body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
-    msg.attach(MIMEText(body, 'plain'))
-    # get files and put them in email
-    for file_path in compromised_files:
-        with open(file_path, 'rb') as file:
-            part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
-            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-            msg.attach(part)
+        body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Attach files to the email
+        for file_path in compromised_files:
+            with open(file_path, 'rb') as file:
+                part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+                part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                msg.attach(part)
 
+        # Send email
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_app_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
-            
-# Download the compromised files via ssh
+    else:
+        print("Recipient email not provided. Skipping email notification.")
+
+# Download the compromised files via SSH
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
     for file_path in compromised_files:
         file_name = os.path.basename(file_path)
@@ -86,9 +95,8 @@ def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
     parser.add_argument('ip_address', help='IP address of the target computer')
     parser.add_argument('username', help='Username for the account on the target computer')
-    parser.add_argument('recipient_email', help='Email address of the CTO')
+    parser.add_argument('email', help='Email address of the CTO')
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
-    parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
     parser.add_argument('-p', '--path', help='Download path for affected files')
     parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
 
@@ -97,12 +105,13 @@ def main():
     ip_address = args.ip_address
     username = args.username
     password = getpass("Enter your SSH password: ")
-    recipient_email = args.recipient_email
+    recipient_email = args.email
     display_files_flag = args.disp
     download_path = args.path
 
     compromised_files = find_compromised_files(ip_address, username, password)
-# display files if -d flag is present
+
+    # Display files if -d flag is present
     if display_files_flag:
         print("Affected Files:")
         for file_path in compromised_files:
@@ -119,3 +128,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
