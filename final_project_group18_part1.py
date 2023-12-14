@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-# Brady Venneman vennemanb1
-# Hunter Perry perryh2
-
 import paramiko
 import os
 import argparse
@@ -14,10 +11,8 @@ import subprocess
 from getpass import getpass
 
 # Insert your email and password to the sender
-sender_email = ""
-sender_password = ""
-#!/usr/bin/python3
-
+sender_email = "your_email@gmail.com"
+sender_password = "your_app_password"
 
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
@@ -95,7 +90,7 @@ def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
     parser.add_argument('ip_address', help='IP address of the target computer')
     parser.add_argument('username', help='Username for the account on the target computer')
-    parser.add_argument('email', help='Email address of the CTO')
+    parser.add_argument('--email', help='Email address of the CTO')
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
     parser.add_argument('-p', '--path', help='Download path for affected files')
     parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
@@ -124,8 +119,4 @@ def main():
     else:
         # If no download path is given, download the smallest compromised file
         smallest_file = min(compromised_files, key=os.path.getsize)
-        download_files_ssh([smallest_file], '.', ip_address, username, password)
-
-if __name__ == "__main__":
-    main()
-
+        download_files_ssh([smallest_file],
