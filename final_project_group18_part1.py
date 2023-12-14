@@ -50,17 +50,16 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
     body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
     msg.attach(MIMEText(body, 'plain'))
 
-    # Attach the smallest-sized file
-    smallest_file = min(compromised_files, key=os.path.getsize)
-    with open(smallest_file, 'rb') as file:
-        part = MIMEApplication(file.read(), Name=os.path.basename(smallest_file))
-        part['Content-Disposition'] = f'attachment; filename="{os.path.basename(smallest_file)}"'
-        msg.attach(part)
+    for file_path in compromised_files:
+        with open(file_path, 'rb') as file:
+            part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            msg.attach(part)
 
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.sendmail(sender_email, recipient_email, msg.as_string())
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_app_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
 
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
     for file_path in compromised_files:
@@ -86,7 +85,7 @@ def main():
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
     parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
     parser.add_argument('-p', '--path', help='Download path for affected files')
-    parser.add_argument('-H', '--hlp', action='help', help='Show this help message and exit')
+    parser.add_argument('-H', '--help', action='help', help='Show this help message and exit')
 
     args = parser.parse_args()
 
