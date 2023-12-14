@@ -14,8 +14,8 @@ import subprocess
 from getpass import getpass
 
 # Insert your email and password to the sender
-sender_email = "autoemail1.3@gmail.com"
-sender_password = "pljo isun jxnw necn"
+sender_email = ""
+sender_password = ""
 
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
