@@ -1,103 +1,159 @@
 #!/usr/bin/python3
 
-import paramiko
-import os
+# Brady Venneman vennemanb1
+# Hunter Perry perryh2
+
 import argparse
+import csv
 import subprocess
-from getpass import getpass
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
+import time
+from email.message import EmailMessage
 import smtplib
+import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
-# Insert your email and password to the sender
-sender_email = "your_email@example.com"
-sender_password = "your_app_password"
 
-def find_compromised_files(ip_address, username, password):
-    find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(ip_address, username=username, password=password)
-    
-    stdin, stdout, stderr = ssh.exec_command(find_command)
-    
-    if not stderr.read().decode():
-        compromised_files = stdout.read().decode().splitlines()
-        return compromised_files
-    else:
-        print(f"Error executing find command: {stderr.read().decode()}")
-        return []
+# Function to get unique user groups from the employee file
+def get_unique_groups(file_path):
+    groups = set()
+    with open(file_path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip the header
+        for row in reader:
+            groups.add(row[2])  # Assuming the user group is in the third column
+    return groups
 
-def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
-    msg = MIMEMultipart()
+# Function to create a username for an employee
+def generate_username(first_name, last_name, existing_usernames):
+    base_username = (last_name + first_name).lower()
+    username = base_username
+    suffix = 1
+    while username in existing_usernames:
+        username = base_username + str(suffix)
+        suffix += 1
+    return username
+
+# Function to create user groups
+def create_user_groups(groups):
+    for group in groups:
+        # use subprocess to execute 'groupadd' command
+        subprocess.run(["groupadd", group])
+
+# Function to force password expiration for odd-numbered rows
+def force_password_expiration(e_file_path):
+    with open(e_file_path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip the header
+        for i, row in enumerate(reader, start=1):
+            if i % 2 != 0:  # Check if the row is odd-numbered
+                username = row[2]  # Assuming the username is in the third column
+                # Use subprocess to execute 'chage' command to force password expiration
+                subprocess.run(["chage", "-d", "0", username])
+
+# Function to create user accounts
+def create_user_accounts(e_file_path, output_file_path, log_file):
+    # get unique user groups from the employee file
+    unique_groups = get_unique_groups(e_file_path)
+    # create user groups
+    create_user_groups(unique_groups)
+    existing_usernames = set()
+    user_details = []
+    with open(e_file_path, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip the header
+        for row in reader:
+            first_name, last_name, user_group, email = row
+            # Make a unique username for each employee
+            username = generate_username(first_name, last_name, existing_usernames)
+            existing_usernames.add(username)
+            # Append user details for writing to the output file
+            user_details.append([first_name, last_name, username, "Password"])
+            # Use subprocess to execute 'useradd' command
+            subprocess.run(["useradd", "-c", f"{first_name} {last_name}", "-G", user_group, username])
+            if log_file:
+                with open(log_file, 'a') as log:
+                    # Log the timestamp when user accounts were created
+                    log.write(f"User account for {username} created at {time.ctime()}\n")
+            # Email username and temporary password if -q option is present
+            # This will involve sending an email to the specified user with the username and temporary password
+            # The implementation will depend on the email service or library being used
+
+    with open(output_file_path, 'w', newline='') as file:
+        # Write user details to the output file
+        writer = csv.writer(file)
+        writer.writerow(['First Name', 'Last Name', 'Username', 'Password'])
+        writer.writerows(user_details)
+
+def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
+    msg = EmailMessage()
+    msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
+    msg['Subject'] = 'Your Temporary Credentials'
     msg['From'] = sender_email
-    msg['To'] = recipient_email
-    msg['Subject'] = 'File Monitoring Report'
+    msg['To'] = user_email
 
-    body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
-    msg.attach(MIMEText(body, 'plain'))
+    # Send the message via the SMTP server
+    with smtplib.SMTP('smtp.gmail.com', 587) as s:
+        s.starttls()
+        s.login(sender_email, sender_password)
+        s.send_message(msg)
 
-    for file_path in compromised_files:
-        with open(file_path, 'rb') as file:
-            part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
-            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-            msg.attach(part)
+def piped_commands(command1: str, command2: str):
+    # Combine the two commands with a pipe
+    piped_command = f"{command1} | {command2}"
 
-    with smtplib.SMTP('smtp.gmail.com', 587) as server:
-        server.starttls()
-        server.login(sender_email, sender_app_password)
-        server.sendmail(sender_email, recipient_email, msg.as_string())
+    # Get NKU username
+    nku_username = "vennemanb1"  # Replace with your NKU username or retrieve dynamically
 
-def download_files_ssh(compromised_files, download_path, ip_address, username, password):
-    for file_path in compromised_files:
-        file_name = os.path.basename(file_path)
-        local_file_path = os.path.join(download_path, file_name)
-        scp_command = f'scp {username}@{ip_address}:{file_path} {local_file_path}'
+    # Create a subdirectory with NKU username
+    subdirectory = os.path.join(os.getcwd(), nku_username)
+    os.makedirs(subdirectory, exist_ok=True)
 
-        try:
-            result = subprocess.run(scp_command, shell=True, check=True, capture_output=True)
-            print(result.stdout.decode())
-        except subprocess.CalledProcessError as e:
-            if "Permission denied" in e.stderr.decode():
-                print(f"Permission denied for {file_name}. Skipping...")
-                continue
-            else:
-                print(f"Error downloading {file_name}: {e}")
+    # Name of the result file
+    result_file = os.path.join(subdirectory, f"{nku_username}_question2_result.txt")
 
+    # Execute the piped command and save the result to the file
+    with open(result_file, 'w') as file:
+        subprocess.run(piped_command, shell=True, stdout=file)
+
+# Argument parsing
+parser = argparse.ArgumentParser(description='User Account Creation Script')
+parser.add_argument('E_FILE_PATH', help='The path to the employee file')
+parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
+parser.add_argument('-l', '--log', help='The name of the log file', type=str)  # Specify type=str
+parser.add_argument('-q', action='store_true', help='Email the username and temporary password to the specified user')
+parser.add_argument('-t', '--temporary', action='store_true', help='Force password expiration for odd-numbered rows')
+parser.add_argument('-c', '--command', action='store_true', help='Perform tasks specified in question 2')
+parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
+args = parser.parse_args()
+
+# Main function
 def main():
-    parser = argparse.ArgumentParser(description='File Monitoring Script')
-    parser.add_argument('ip_address', help='IP address of the target computer')
-    parser.add_argument('username', help='Username for the account on the target computer')
-    parser.add_argument('recipient_email', help='Email address of the CTO')
-    parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
-    parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
-    parser.add_argument('-p', '--path', help='Download path for affected files')
-    parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
+    create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
+    if args.q:
+        sender_email = 'autoemail1.3@gmail.com'
+        sender_password = 'nzjg fqql xcoa uzmj'
+        with open(args.OUTPUT_FILE_PATH, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip the header
+            for row in reader:
+                username = row[2]
+                temp_password = row[3]
+                user_email = row[3]
+                email_temp_password(username, temp_password, user_email, sender_email, sender_password)
 
-    args = parser.parse_args()
+    if args.temporary:
+        force_password_expiration(args.E_FILE_PATH)
 
-    ip_address = args.ip_address
-    username = args.username
-    password = getpass("Enter your SSH password: ")
-    recipient_email = args.recipient_email
-    display_files_flag = args.disp
-    download_path = args.path
-
-    compromised_files = find_compromised_files(ip_address, username, password)
-
-    if display_files_flag:
-        print("Affected Files:")
-        for file_path in compromised_files:
-            print(file_path)
-
-    send_email(sender_email, sender_password, recipient_email, compromised_files, username)
-
-    if download_path:
-        download_files_ssh(compromised_files, download_path, ip_address, username, password)
-    else:
-        smallest_file = min(compromised_files, key=os.path.getsize)
-        download_files_ssh([smallest_file], '.', ip_address, username, password)
-
-if __name__ == "__main__":
+    if args.command:
+            # Get two commands from the user
+            command1 = input("Enter the first Linux command: ")
+            command2 = input("Enter the second Linux command: ")
+    
+            # Call the function to execute the piped commands
+            piped_commands(command1, command2)
+# check if the script is being run as the main program
+if __name__ == '__main__':
+    # call the main function
     main()
