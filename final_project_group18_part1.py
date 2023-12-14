@@ -21,7 +21,7 @@ sender_password = "pljo isun jxnw necn"
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
 
-def find_compromised_files(username):
+def find_compromised_files(username, password):
     # Build the find command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
@@ -77,7 +77,6 @@ def main():
     parser = argparse.ArgumentParser(description='File Monitoring Script')
     parser.add_argument('ip_address', help='IP address of the target computer')
     parser.add_argument('username', help='Username for the account on the target computer')
-    parser.add_argument('password', help='Password for the account on the target computer')
     parser.add_argument('recipient_email', help='Email address of the CTO')
     parser.add_argument('-d', '--disp', action='store_true', help='Display the contents of affected files')
     parser.add_argument('-e', '--email', required=True, help='Email address of the CTO')
@@ -88,12 +87,12 @@ def main():
 
     ip_address = args.ip_address
     username = args.username
-    password = args.password
+    password = getpass("Enter your SSH password: ")  # Securely get the password
     recipient_email = args.recipient_email
     display_files_flag = args.disp
     download_path = args.path
 
-    compromised_files = find_compromised_files(username)
+    compromised_files = find_compromised_files(username, password)
 
     if display_files_flag:
         print("Affected Files:")
@@ -107,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
