@@ -21,7 +21,7 @@ smtp_server = 'smtp.gmail.com'
 smtp_port = 587
 
 def find_compromised_files(ip_address, username, password):
-    # Build the find command to identify compromised files
+    # command to identify compromised files
     find_command = f'find /home/{username} -type f -ctime -30 -mtime -7'
 
     # Execute the find command remotely using SSH
@@ -39,8 +39,9 @@ def find_compromised_files(ip_address, username, password):
     else:
         print(f"Error executing find command: {stderr.read().decode()}")
         return []
-
+# send email to CTO with compromised user and the files
 def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
+    # Create message
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
@@ -48,7 +49,7 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
 
     body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
     msg.attach(MIMEText(body, 'plain'))
-
+    # get files and put them in email
     for file_path in compromised_files:
         with open(file_path, 'rb') as file:
             part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
@@ -59,7 +60,8 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
             server.starttls()
             server.login(sender_email, sender_app_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
-
+            
+# Download the compromised files via ssh
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
     for file_path in compromised_files:
         file_name = os.path.basename(file_path)
@@ -80,6 +82,7 @@ def download_files_ssh(compromised_files, download_path, ip_address, username, p
                 print(f"Error downloading {file_name}: {e}")
 
 def main():
+    # Add all command line arguments to use
     parser = argparse.ArgumentParser(description='File Monitoring Script')
     parser.add_argument('ip_address', help='IP address of the target computer')
     parser.add_argument('username', help='Username for the account on the target computer')
@@ -93,13 +96,13 @@ def main():
 
     ip_address = args.ip_address
     username = args.username
-    password = getpass("Enter your SSH password: ")  # Securely get the password
+    password = getpass("Enter your SSH password: ")
     recipient_email = args.recipient_email
     display_files_flag = args.disp
     download_path = args.path
 
     compromised_files = find_compromised_files(ip_address, username, password)
-
+# display files if -d flag is present
     if display_files_flag:
         print("Affected Files:")
         for file_path in compromised_files:
