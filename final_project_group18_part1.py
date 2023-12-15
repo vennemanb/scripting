@@ -50,7 +50,7 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
         # Attach files to the email
         for file_path in compromised_files:
             with open(file_path, 'rb') as file:
-                part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+                part = MIMEApplication (file.read(), Name=os.path.basename(file_path))
                 part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
                 msg.attach(part)
 
@@ -69,18 +69,28 @@ def download_files_ssh(compromised_files, download_path, ip_address, username, p
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(ip_address, username=username, password=password)
 
+    # if path isnt found create it
+    if not os.path.exists(download_path):
+        os.makedirs(download_path)
+        
     # Download the compromised files
     for file_path in compromised_files:
         file_name = os.path.basename(file_path)
         local_file_path = os.path.join(download_path, file_name)
 
-        # Use SFTP to download files from the remote server to the local machine
-        sftp = ssh.open_sftp()
-        sftp.get(file_path, local_file_path)
-        sftp.close()
+        try:
+            # Use SFTP to download files from the remote server to the local machine
+            sftp = ssh.open_sftp()
+            sftp.get(file_path, local_file_path)
+            sftp.close()
+            print(f"Downloaded: {file_name}")
+        except Exception as e:
+            print(f"Error downloading {file_name}: {str(e)}")
+            # Continue to the next file even if an error occurs
 
     # Close the SSH connection
     ssh.close()
+
 
 def main():
     # Add all command line arguments to use
