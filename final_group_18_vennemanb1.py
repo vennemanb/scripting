@@ -63,29 +63,21 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
 
 def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
     try:
-        # Convert username, temp_password, and message to bytes
-        username_bytes = username.encode('utf-8')
-        temp_password_bytes = temp_password.decode('utf-8').encode('utf-8')
-        message_bytes = f"Hello, your username is: {username} and your temporary password is: {temp_password.decode('utf-8')}".encode('utf-8')
-
-        # Create EmailMessage instance
         msg = EmailMessage()
-        msg.set_content(message_bytes, subtype='plain')
+        msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}", subtype='plain')
         msg['Subject'] = 'Your Temporary Credentials'
         msg['From'] = sender_email
         msg['To'] = user_email
 
-        # Connect to the SMTP server
         with smtplib.SMTP('smtp.gmail.com', 587) as s:
             s.starttls()
             s.login(sender_email, sender_password)
-
-            # Send the email
             s.send_message(msg)
 
         print(f"Email sent successfully to {user_email}")
     except Exception as e:
         print(f"Error sending email to {user_email}: {str(e)}")
+
 
 
 def piped_commands(command1: str, command2: str):
