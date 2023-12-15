@@ -7,13 +7,6 @@ import argparse
 import csv
 import subprocess
 import time
-from email.message import EmailMessage
-import smtplib
-import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-
 
 # Function to get unique user groups from the employee file
 def get_unique_groups(file_path):
@@ -41,16 +34,6 @@ def create_user_groups(groups):
         # use subprocess to execute 'groupadd' command
         subprocess.run(["groupadd", group])
 
-# Function to force password expiration for odd-numbered rows
-def force_password_expiration(e_file_path):
-    with open(e_file_path, 'r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip the header
-        for i, row in enumerate(reader, start=1):
-            if i % 2 != 0:  # Check if the row is odd-numbered
-                username = row[2]  # Assuming the username is in the third column
-                # Use subprocess to execute 'chage' command to force password expiration
-                subprocess.run(["chage", "-d", "0", username])
 
 # Function to create user accounts
 def create_user_accounts(e_file_path, output_file_path, log_file):
@@ -76,9 +59,6 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
                 with open(log_file, 'a') as log:
                     # Log the timestamp when user accounts were created
                     log.write(f"User account for {username} created at {time.ctime()}\n")
-            # Email username and temporary password if -q option is present
-            # This will involve sending an email to the specified user with the username and temporary password
-            # The implementation will depend on the email service or library being used
 
     with open(output_file_path, 'w', newline='') as file:
         # Write user details to the output file
@@ -86,73 +66,19 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
         writer.writerow(['First Name', 'Last Name', 'Username', 'Password'])
         writer.writerows(user_details)
 
-
-def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
-    msg = MIMEMultipart()
-    msg.attach(MIMEText(f"Hello, your username is: {username} and your temporary password is: {temp_password}"))
-    msg['Subject'] = 'Your Temporary Credentials'
-    msg['From'] = sender_email
-    msg['To'] = user_email
-
-    with smtplib.SMTP('smtp.gmail.com', 587) as s:
-        s.starttls()
-        s.login(sender_email, sender_password)
-        s.send_message(msg)
-
-def piped_commands(command1: str, command2: str):
-    # Combine the two commands with a pipe
-    piped_command = f"{command1} | {command2}"
-
-    # Get NKU username
-    nku_username = "vennemanb1"  # Replace with your NKU username or retrieve dynamically
-
-    # Create a subdirectory with NKU username
-    subdirectory = os.path.join(os.getcwd(), nku_username)
-    os.makedirs(subdirectory, exist_ok=True)
-
-    # Name of the result file
-    result_file = os.path.join(subdirectory, f"{nku_username}_question2_result.txt")
-
-    # Execute the piped command and save the result to the file
-    with open(result_file, 'w') as file:
-        subprocess.run(piped_command, shell=True, stdout=file)
-
 # Argument parsing
 parser = argparse.ArgumentParser(description='User Account Creation Script')
 parser.add_argument('E_FILE_PATH', help='The path to the employee file')
 parser.add_argument('OUTPUT_FILE_PATH', help='The path to the output file')
-parser.add_argument('-l', '--log', help='The name of the log file', type=str)  # Specify type=str
-parser.add_argument('-q', action='store_true', help='Email the username and temporary password to the specified user')
-parser.add_argument('-t', '--temporary', action='store_true', help='Force password expiration for odd-numbered rows')
-parser.add_argument('-c', '--command', action='store_true', help='Perform tasks specified in question 2')
-parser.add_argument('-H', '--Help', action='help', help='Show this help message and exit')
+parser.add_argument('-l', '--log', help='The name of the log file')
+parser.add_argument('-H', '-Help', action='help', help='Show this help message and exit')
 args = parser.parse_args()
 
 # Main function
 def main():
+    # call the function to create user accounts
     create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
-    if args.q:
-        sender_email = 'autoemail1.3@gmail.com'
-        sender_password = 'nzjg fqql xcoa uzmj'
-        with open(args.OUTPUT_FILE_PATH, 'r') as file:
-            reader = csv.reader(file)
-            next(reader)  # Skip the header
-            for row in reader:
-                username = row[2]
-                temp_password = row[3]
-                user_email = row[3]
-                email_temp_password(username, temp_password, user_email, sender_email, sender_password)
 
-    if args.temporary:
-        force_password_expiration(args.E_FILE_PATH)
-
-    if args.command:
-            # Get two commands from the user
-            command1 = input("Enter the first Linux command: ")
-            command2 = input("Enter the second Linux command: ")
-    
-            # Call the function to execute the piped commands
-            piped_commands(command1, command2)
 # check if the script is being run as the main program
 if __name__ == '__main__':
     # call the main function
