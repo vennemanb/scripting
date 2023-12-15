@@ -8,8 +8,8 @@ from email.mime.application import MIMEApplication
 from getpass import getpass
 
 # Insert your email and password to the sender
-sender_email = "your_email@gmail.com"
-sender_password = "your_app_password"
+sender_email = ""
+sender_password = ""
 
 smtp_server = 'smtp.gmail.com'
 smtp_port = 587
