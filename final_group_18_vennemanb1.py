@@ -102,8 +102,8 @@ args = parser.parse_args()
 def main():
     create_user_accounts(args.E_FILE_PATH, args.OUTPUT_FILE_PATH, args.log)
     if args.q:
-        sender_email = 'your_email@gmail.com'  # Replace with the actual sender email
-        sender_password = 'your_app_password'  # Replace with the actual sender app password
+        sender_email = ''  # Replace with the actual sender email
+        sender_password = ''  # Replace with the actual sender app password
 
         with open(args.OUTPUT_FILE_PATH, 'r') as file:
             reader = csv.reader(file)
