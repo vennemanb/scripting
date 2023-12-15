@@ -38,7 +38,7 @@ def find_compromised_files(ip_address, username, password, path):
 def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
     # Check if recipient_email is provided
     if recipient_email:
-    # Create message
+        # Create message
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
@@ -46,13 +46,17 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
 
         body = f"Dear CTO,\n\nThe following files have been compromised for user {username}:\n\n{', '.join(compromised_files)}\n\nBest regards,\nYour File Monitoring Script"
         msg.attach(MIMEText(body, 'plain'))
-        
-        # Attach files to the email
+
+        # Attempt to attach and send each file individually
         for file_path in compromised_files:
-            with open(file_path, 'rb') as file:
-                part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
-                part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-                msg.attach(part)
+            try:
+                with open(file_path, 'rb') as file:
+                    part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
+                    part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                    msg.attach(part)
+            except Exception as e:
+                print(f"Error attaching file {file_path}: {str(e)}")
+                continue
 
         try:
             # Send email
