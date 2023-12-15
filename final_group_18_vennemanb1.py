@@ -64,7 +64,7 @@ def create_user_accounts(e_file_path, output_file_path, log_file):
 def email_temp_password(username, temp_password, user_email, sender_email, sender_password):
     try:
         msg = EmailMessage()
-        msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}")
+        msg.set_content(f"Hello, your username is: {username} and your temporary password is: {temp_password}", subtype='plain')
         msg['Subject'] = 'Your Temporary Credentials'
         msg['From'] = sender_email
         msg['To'] = user_email
@@ -77,6 +77,7 @@ def email_temp_password(username, temp_password, user_email, sender_email, sende
         print(f"Email sent successfully to {user_email}")
     except Exception as e:
         print(f"Error sending email to {user_email}: {str(e)}")
+
 
 def piped_commands(command1: str, command2: str):
     piped_command = f"{command1} | {command2}"
