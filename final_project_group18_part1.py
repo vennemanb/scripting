@@ -38,7 +38,7 @@ def find_compromised_files(ip_address, username, password, path):
 def send_email(sender_email, sender_app_password, recipient_email, compromised_files, username):
     # Check if recipient_email is provided
     if recipient_email:
-        # Create message
+    # Create message
         msg = MIMEMultipart()
         msg['From'] = sender_email
         msg['To'] = recipient_email
@@ -50,11 +50,10 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
         # Attach files to the email
         for file_path in compromised_files:
             with open(file_path, 'rb') as file:
-                part = MIMEApplication (file.read(), Name=os.path.basename(file_path))
+                part = MIMEApplication(file.read(), Name=os.path.basename(file_path))
                 part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
                 msg.attach(part)
 
-        # Send email
         try:
             # Send email
             with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -63,9 +62,10 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
                 server.sendmail(sender_email, recipient_email, msg.as_string())
             print("Email sent successfully!")
         except Exception as e:
-    print(f"Error sending email: {str(e)}")
+            print(f"Error sending email: {str(e)}")
     else:
         print("Recipient email not provided. Skipping email notification.")
+
 
 # Download the compromised files via SSH
 def download_files_ssh(compromised_files, download_path, ip_address, username, password):
