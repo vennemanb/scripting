@@ -55,10 +55,15 @@ def send_email(sender_email, sender_app_password, recipient_email, compromised_f
                 msg.attach(part)
 
         # Send email
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(sender_email, sender_app_password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
+        try:
+            # Send email
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_app_password)
+                server.sendmail(sender_email, recipient_email, msg.as_string())
+            print("Email sent successfully!")
+        except Exception as e:
+    print(f"Error sending email: {str(e)}")
     else:
         print("Recipient email not provided. Skipping email notification.")
 
@@ -72,7 +77,7 @@ def download_files_ssh(compromised_files, download_path, ip_address, username, p
     # if path isnt found create it
     if not os.path.exists(download_path):
         os.makedirs(download_path)
-        
+
     # Download the compromised files
     for file_path in compromised_files:
         file_name = os.path.basename(file_path)
